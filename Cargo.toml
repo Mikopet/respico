@@ -1,0 +1,15 @@
+[package]
+name = "respico"
+version = "0.1.0"
+authors = ["Peter MIKOLA <mikopet@mikopet.dev>"]
+edition = "2021"
+
+description = "very small RESP parser"
+readme = "README.md"
+repository = "https://github.com/Mikopet/respico"
+license = "MIT"
+
+keywords = ["redis", "resp", "parse", "stream"]
+categories = ["encoding", "parser", "parser-implementation", "network-programming"]
+
+[dependencies]
