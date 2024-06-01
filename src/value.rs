@@ -1,5 +1,4 @@
-#[derive(Debug, Eq, PartialEq)]
-pub struct Error(pub &'static str);
+use crate::error::*;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Value<'a> {
@@ -55,6 +54,20 @@ impl<'a> Value<'a> {
             _ => Err(Error("invalid first char")),
         }
     }
+
+    /// Checks if aggregate type is null (capacity == 0)
+    ///
+    /// If type is simple, giving fallback (false)
+    pub fn is_null(&self) -> bool {
+        let capacity = match self {
+            Value::Array(a) => a.capacity(),
+            Value::BulkString(s) => s.capacity(),
+            // defaults for simple types
+            _ => 1, // false
+        };
+
+        capacity == 0
+    }
 }
 
 #[cfg(test)]
@@ -68,7 +81,7 @@ mod tests {
         let map = HashMap::from([
             ("data", Error("invalid first char")),
             ("$-2", Error("invalid length")),
-            ("*-1", Error("invalid length")),
+            ("*-2", Error("invalid length")),
             (":i", Error("invalid number")),
         ]);
 
@@ -76,5 +89,26 @@ mod tests {
             assert_eq!(Value::init(k), Err(v));
         }
     }
-}
 
+    #[test]
+    fn parse_valid_types() {
+        let map = HashMap::from([
+            ("+OK", Value::SimpleString("OK")),
+            ("+OK ok", Value::SimpleString("OK ok")),
+            ("-ERR", Value::SimpleError("ERR")),
+            ("-ERR reason", Value::SimpleError("ERR reason")),
+            (":+2", Value::Integer(2)),
+            (":1", Value::Integer(1)),
+            (":0", Value::Integer(0)),
+            (":-1", Value::Integer(-1)),
+            ("$0", Value::BulkString(vec![])),
+            ("$1", Value::BulkString(vec![])),
+            ("*0", Value::Array(vec![])),
+            ("*1", Value::Array(vec![])),
+        ]);
+
+        for (k, v) in map {
+            assert_eq!(Value::init(k).unwrap(), v);
+        }
+    }
+}
